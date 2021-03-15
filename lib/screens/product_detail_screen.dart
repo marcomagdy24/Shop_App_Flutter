@@ -25,8 +25,6 @@ class ProductDetailScreen extends StatelessWidget {
           width: double.infinity,
           padding: EdgeInsets.all(10),
           child: Card(
-            elevation: 5,
-            shadowColor: Theme.of(context).primaryColor,
             child: Image.network(
               item.imageUrl,
               fit: BoxFit.cover,
