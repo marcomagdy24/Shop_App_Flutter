@@ -25,7 +25,7 @@ class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
     return Scaffold(
       drawer: AppDrawaer(),
       appBar: AppBar(
-        title: Text('My Shop'),
+        title: Text('Online Shopping'),
         actions: [
           PopupMenuButton(
             onSelected: (FilterOptions selectedValue) {
