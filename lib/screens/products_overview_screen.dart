@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 
 import '../widgets/product_grid.dart';
 import '../widgets/badge.dart';
+import '../widgets/progress_indicator.dart';
 import '../widgets/app_drawer.dart';
 import '../providers/cart.dart';
+import '../providers/products.dart';
 import '../screens/cart_screen.dart';
 
 enum FilterOptions {
@@ -19,6 +21,20 @@ class ProductOverviewScreen extends StatefulWidget {
 
 class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
   bool _showOnlyFavourites = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    Provider.of<Products>(context, listen: false)
+        .fetchAndSetProducts()
+        .then((_) {
+      setState(() {
+        _isLoading = false;
+      });
+    });
+
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +79,9 @@ class _ProductOverviewScreenState extends State<ProductOverviewScreen> {
           ),
         ],
       ),
-      body: ProductGrid(_showOnlyFavourites),
+      body: _isLoading
+          ? CustomProgressIndicator()
+          : ProductGrid(_showOnlyFavourites),
     );
   }
 }
