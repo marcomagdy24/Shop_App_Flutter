@@ -8,6 +8,7 @@ import '../providers/cart.dart';
 class ProductItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final scaffold = ScaffoldMessenger.of(context);
     final product = Provider.of<Product>(context, listen: false);
     final cart = Provider.of<Cart>(context, listen: false);
     return Container(
@@ -43,7 +44,15 @@ class ProductItem extends StatelessWidget {
                         : Icons.favorite_outline,
                   ),
                   color: Theme.of(context).accentColor,
-                  onPressed: product.toggleFavouriteStatus,
+                  onPressed: () async {
+                    try {
+                      await product.toggleFavouriteStatus();
+                    } catch (_) {
+                      scaffold.showSnackBar(
+                        SnackBar(content: Text('Something went wrong!')),
+                      );
+                    }
+                  },
                 ),
               ),
               trailing: IconButton(
