@@ -3,8 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../providers/cart.dart' show Cart;
 import '../widgets/cart_item.dart';
-import '../providers/orders.dart';
-import './orders_screen.dart';
+import '../widgets/order_button.dart';
 
 class CartScreen extends StatelessWidget {
   static const routeName = "/cart";
@@ -34,6 +33,7 @@ class CartScreen extends StatelessWidget {
                       child: Text(
                         '\$${cart.totalAmount.toStringAsFixed(2)}',
                         style: TextStyle(
+                          fontSize: 18,
                           color: Theme.of(context)
                               .primaryTextTheme
                               .headline6
@@ -43,19 +43,7 @@ class CartScreen extends StatelessWidget {
                     ),
                     backgroundColor: Theme.of(context).primaryColor,
                   ),
-                  TextButton(
-                    onPressed: () {
-                      Provider.of<Orders>(context, listen: false).addOrder(
-                        cart.items.values.toList(),
-                        cart.totalAmount,
-                      );
-                      Navigator.of(context).pushNamed(OrderScreen.routeName);
-                      cart.clearCart();
-                    },
-                    child: Text(
-                      "ORDER NOW",
-                    ),
-                  )
+                  OrderButton(cart: cart)
                 ],
               ),
             ),
