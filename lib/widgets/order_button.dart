@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../providers/cart.dart';
 import '../providers/orders.dart';
-import '../screens/orders_screen.dart';
 import './progress_indicator.dart';
 
 class OrderButton extends StatefulWidget {
