@@ -37,6 +37,28 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.purple,
           accentColor: Colors.deepOrange,
           fontFamily: 'Lato',
+          textTheme: TextTheme(
+            bodyText1: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            bodyText2: TextStyle(fontSize: 18),
+          ),
+          inputDecorationTheme: InputDecorationTheme(
+            fillColor: Colors.white,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(25.0),
+              borderSide: const BorderSide(),
+            ),
+            //fillColor: Colors.green
+          ),
+          snackBarTheme: SnackBarThemeData(
+            backgroundColor: Colors.teal,
+            actionTextColor: Colors.white,
+            disabledActionTextColor: Colors.grey,
+            contentTextStyle: TextStyle(fontSize: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(Radius.circular(10)),
+            ),
+            behavior: SnackBarBehavior.floating,
+          ),
           cardTheme: CardTheme(
             elevation: 5,
             shadowColor: Theme.of(context).primaryColor,
