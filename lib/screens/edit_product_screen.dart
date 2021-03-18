@@ -144,6 +144,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
                   children: <Widget>[
                     SizedBox(height: 20),
                     TextFormField(
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
                       initialValue: _editedProduct.title,
                       decoration: InputDecoration(
                         labelText: 'Title',

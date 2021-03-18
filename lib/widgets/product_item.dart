@@ -4,12 +4,14 @@ import 'package:provider/provider.dart';
 import '../screens/product_detail_screen.dart';
 import '../providers/product.dart';
 import '../providers/cart.dart';
+import '../providers/auth.dart';
 
 class ProductItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scaffold = ScaffoldMessenger.of(context);
     final product = Provider.of<Product>(context, listen: false);
+    final authData = Provider.of<Auth>(context, listen: false);
     final cart = Provider.of<Cart>(context, listen: false);
     return Container(
       clipBehavior: Clip.antiAlias,
@@ -46,7 +48,8 @@ class ProductItem extends StatelessWidget {
                   color: Theme.of(context).accentColor,
                   onPressed: () async {
                     try {
-                      await product.toggleFavouriteStatus();
+                      await product.toggleFavouriteStatus(
+                          authData.token, authData.userId);
                     } catch (_) {
                       scaffold.showSnackBar(
                         SnackBar(content: Text('Something went wrong!')),

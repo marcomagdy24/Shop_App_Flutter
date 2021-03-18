@@ -27,12 +27,14 @@ class Product with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> toggleFavouriteStatus() async {
+  Future<void> toggleFavouriteStatus(String authToken, String userId) async {
     toggleStatus();
     final url =
-        'https://shop-app-f6161-default-rtdb.firebaseio.com/products/$id.json';
-    final response = await http.patch(Uri.parse(url),
-        body: json.encode({'isFavourite': this.isFavourite}));
+        'https://shop-app-f6161-default-rtdb.firebaseio.com/userFavourites/$userId/$id.json?auth=$authToken';
+    final response = await http.put(
+      Uri.parse(url),
+      body: json.encode(isFavourite),
+    );
     if (response.statusCode >= 400) {
       toggleStatus();
       throw HttpException('Something went wrong!');
