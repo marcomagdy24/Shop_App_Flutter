@@ -58,7 +58,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
   @override
   void dispose() {
     _imageUrlFocusController.removeListener(_updateImageUrl);
-
     _imageUrlController.dispose();
     _imageUrlFocusController.dispose();
     super.dispose();
@@ -139,6 +138,7 @@ class _EditProductScreenState extends State<EditProductScreen> {
           : Padding(
               padding: const EdgeInsets.all(16.0),
               child: Form(
+                autovalidateMode: AutovalidateMode.always,
                 key: _form,
                 child: ListView(
                   children: <Widget>[
