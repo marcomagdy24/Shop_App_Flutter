@@ -52,7 +52,10 @@ class AuthScreen extends StatelessWidget {
                 children: <Widget>[
                   Flexible(
                     child: Container(
-                      margin: EdgeInsets.only(bottom: 20.0),
+                      margin: EdgeInsets.only(
+                        bottom: 20.0,
+                        // top: MediaQuery.of(context).padding.top,
+                      ),
                       padding:
                           EdgeInsets.symmetric(vertical: 8.0, horizontal: 94.0),
                       transform: Matrix4.rotationZ(-8 * pi / 180)
@@ -72,8 +75,7 @@ class AuthScreen extends StatelessWidget {
                       child: Text(
                         'MyShop',
                         style: TextStyle(
-                          color:
-                              Theme.of(context).accentTextTheme.headline6.color,
+                          color: Colors.white,
                           fontSize: 50,
                           fontFamily: 'Anton',
                           fontWeight: FontWeight.normal,
@@ -82,7 +84,10 @@ class AuthScreen extends StatelessWidget {
                     ),
                   ),
                   Flexible(
-                    flex: deviceSize.width > 600 ? 2 : 1,
+                    // flex: deviceSize.width > 600 ? 2 : 1,
+
+                    // flex: 3,
+
                     child: AuthCard(),
                   ),
                 ],
@@ -104,9 +109,27 @@ class AuthCard extends StatefulWidget {
   _AuthCardState createState() => _AuthCardState();
 }
 
-class _AuthCardState extends State<AuthCard> {
+class _AuthCardState extends State<AuthCard>
+    with SingleTickerProviderStateMixin {
+  final labelStyle = TextStyle(color: Colors.white60);
+  final _imageUrlController = TextEditingController();
+  final _imageUrlFocusController = FocusNode();
+  final focusedBorder = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(25.0),
+    borderSide: BorderSide(
+      color: Colors.white54,
+    ),
+  );
+  final enabledBorder = OutlineInputBorder(
+    borderRadius: BorderRadius.circular(25.0),
+    borderSide: BorderSide(
+      color: Colors.white54,
+      width: 2.0,
+    ),
+  );
+
   final GlobalKey<FormState> _formKey = GlobalKey();
-  var errorMessage;
+  var errorMessage = "";
   final regEx = RegExp(
     r'^(([^<>()[\]\\.,;:\s@\"]+(\.[^<>()[\]\\.,;:\s@\"]+)*)|(\".+\"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$',
   );
@@ -114,9 +137,77 @@ class _AuthCardState extends State<AuthCard> {
   Map<String, String> _authData = {
     'email': '',
     'password': '',
+    'name': '',
+    'imageUrl': '',
   };
   var _isLoading = false;
   final _passwordController = TextEditingController();
+  bool errorText = false;
+
+  double _currentHeight = 0;
+  AnimationController _controller;
+  // Animation<Size> _heightAnimation;
+  Animation<double> _opacityAnimation;
+  Animation<Offset> _offsetAnimation;
+
+  void _updateImageUrl() {
+    if (!_imageUrlFocusController.hasFocus) {
+      if ((!_imageUrlController.text.startsWith('http') &&
+              !_imageUrlController.text.startsWith('https')) ||
+          !_imageUrlController.text.endsWith('.png') &&
+              !_imageUrlController.text.endsWith('.jpg') &&
+              !_imageUrlController.text.endsWith('.jpeg')) {
+        return;
+      }
+
+      setState(() {});
+    }
+  }
+
+  @override
+  void initState() {
+    _controller = AnimationController(
+      vsync: this,
+      duration: Duration(
+        milliseconds: 300,
+      ),
+    );
+    _imageUrlFocusController.addListener(_updateImageUrl);
+
+    _opacityAnimation = Tween<double>(begin: 0.0, end: 1)
+        .animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
+    // _heightAnimation = Tween<Size>(
+    //   begin: Size(double.infinity, 260),
+    //   end: Size(double.infinity, 320),
+    // ).animate(CurvedAnimation(
+    //   parent: _controller,
+    //   curve: Curves.fastOutSlowIn,
+    // ));
+    _offsetAnimation = Tween<Offset>(begin: Offset(0, -1), end: Offset(0, 0))
+        .animate(CurvedAnimation(
+      parent: _controller,
+      curve: Curves.fastOutSlowIn,
+    ));
+    // _heightAnimation.addListener(() {
+    //   setState(() {});
+    // });
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    _imageUrlController.text = _authData['imageUrl'];
+    super.didChangeDependencies();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _imageUrlFocusController.removeListener(_updateImageUrl);
+    _imageUrlController.dispose();
+    _imageUrlFocusController.dispose();
+    super.dispose();
+  }
 
   void _showErrorDialog(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -144,8 +235,8 @@ class _AuthCardState extends State<AuthCard> {
   }
 
   Future<void> _submit() async {
-    print(_authData['email']);
-    print(_authData['password']);
+    // print(_authData['email']);
+    // print(_authData['password']);
     FocusScope.of(context).requestFocus(FocusNode());
     if (!_formKey.currentState.validate()) {
       // Invalid!
@@ -165,6 +256,8 @@ class _AuthCardState extends State<AuthCard> {
         await Provider.of<Auth>(context, listen: false).signup(
           _authData['email'],
           _authData['password'],
+          _authData['name'],
+          _authData['imageUrl'],
         );
       }
     } on HttpException catch (e) {
@@ -186,34 +279,58 @@ class _AuthCardState extends State<AuthCard> {
       }
       _showErrorDialog(errorMessage);
     } catch (e) {
-      print(e);
+      // print(e);
       errorMessage = "Could not authenticate you. Please try again later.";
       _showErrorDialog(errorMessage);
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
-    setState(() {
-      _isLoading = false;
-    });
   }
 
   void _switchAuthMode() {
     if (_authMode == AuthMode.Login) {
       setState(() {
+        // errorText = false;
         _authMode = AuthMode.Signup;
       });
+      _controller.forward();
     } else {
       setState(() {
+        // errorText = false;
         _authMode = AuthMode.Login;
       });
+      _controller.reverse();
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final deviceSize = MediaQuery.of(context).size;
-    return Container(
-      height: _authMode == AuthMode.Signup ? 320 : 260,
-      constraints:
-          BoxConstraints(minHeight: _authMode == AuthMode.Signup ? 320 : 260),
+
+    // print(errorText);
+    if (_authMode == AuthMode.Signup) {
+      if (errorText) {
+        _currentHeight = 500;
+      } else {
+        _currentHeight = 450;
+      }
+    } else {
+      if (errorText) {
+        _currentHeight = 300;
+      } else {
+        _currentHeight = 260;
+      }
+    }
+    return AnimatedContainer(
+      curve: Curves.easeIn,
+      duration: Duration(milliseconds: 300),
+      height: _currentHeight,
+      // height: 50000,
+
       width: min(deviceSize.width * 0.75, 350),
       padding: EdgeInsets.all(16.0),
       decoration: BoxDecoration(
@@ -226,8 +343,8 @@ class _AuthCardState extends State<AuthCard> {
           ),
           BoxShadow(
             color: Color(0xFF440D35),
-            offset: Offset(-5, -3),
-            spreadRadius: 2,
+            offset: Offset(-3, -5),
+            spreadRadius: 5,
             blurRadius: 5,
           ),
         ],
@@ -250,20 +367,39 @@ class _AuthCardState extends State<AuthCard> {
           stops: [0, 1],
         ),
       ),
+
       child: Form(
         key: _formKey,
+        autovalidateMode: AutovalidateMode.onUserInteraction,
         child: SingleChildScrollView(
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.end,
             children: <Widget>[
+              SizedBox(height: 10),
               TextFormField(
-                decoration: InputDecoration(labelText: 'E-Mail'),
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  labelStyle: labelStyle,
+                  enabledBorder: enabledBorder,
+                  focusedBorder: focusedBorder,
+                ),
                 style: TextStyle(color: Colors.white),
                 keyboardType: TextInputType.emailAddress,
-
+                textInputAction: TextInputAction.next,
                 // ignore: missing_return
                 validator: (value) {
-                  if (value.isEmpty) return "Please provide an email";
-                  if (!regEx.hasMatch(value)) return 'Invalid email!';
+                  if (value.isEmpty) {
+                    errorText = true;
+                    // print("No Email");
+                    return "Please provide an email";
+                  }
+                  if (!regEx.hasMatch(value)) {
+                    errorText = true;
+                    // print("Invalid Email");
+                    return "Please provide valid format for email";
+                  }
+                  // print("No Error in Email");
+                  errorText = false;
                 },
                 onSaved: (value) {
                   _authData['email'] = value;
@@ -271,14 +407,37 @@ class _AuthCardState extends State<AuthCard> {
               ),
               SizedBox(height: 10),
               TextFormField(
-                decoration: InputDecoration(labelText: 'Password'),
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  labelStyle: labelStyle,
+                  enabledBorder: enabledBorder,
+                  focusedBorder: focusedBorder,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(25),
+                    borderSide: BorderSide(
+                      color: Colors.white,
+                      width: 8,
+                    ),
+                  ),
+                ),
                 style: TextStyle(color: Colors.white),
                 obscureText: true,
+                textInputAction: TextInputAction.next,
                 controller: _passwordController,
                 // ignore: missing_return
                 validator: (value) {
-                  if (value.isEmpty) return "Please provide a password";
-                  if (value.length < 5) return 'Password is too short!';
+                  if (value.isEmpty) {
+                    errorText = true;
+                    // print('No password');
+                    return "Please provide a password";
+                  }
+                  if (value.length < 5) {
+                    errorText = true;
+                    // print('Short pass');
+                    return 'Password is too short!';
+                  }
+                  // print('No error in pass');
+                  errorText = false;
                 },
                 onSaved: (value) {
                   _authData['password'] = value;
@@ -288,19 +447,133 @@ class _AuthCardState extends State<AuthCard> {
                 Column(
                   children: [
                     SizedBox(height: 10),
-                    TextFormField(
-                      enabled: _authMode == AuthMode.Signup,
-                      style: TextStyle(color: Colors.white),
-                      decoration:
-                          InputDecoration(labelText: 'Confirm Password'),
-                      obscureText: true,
-                      validator: _authMode == AuthMode.Signup
-                          // ignore: missing_return
-                          ? (value) {
-                              if (value != _passwordController.text)
-                                return 'Passwords do not match!';
-                            }
-                          : null,
+                    SlideTransition(
+                      position: _offsetAnimation,
+                      child: FadeTransition(
+                        opacity: _opacityAnimation,
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
+                              enabled: _authMode == AuthMode.Signup,
+                              style: TextStyle(color: Colors.white),
+                              textInputAction: TextInputAction.next,
+                              decoration: InputDecoration(
+                                labelText: 'Confirm Password',
+                                labelStyle: labelStyle,
+                                enabledBorder: enabledBorder,
+                                focusedBorder: focusedBorder,
+                              ),
+                              obscureText: true,
+                              validator: _authMode == AuthMode.Signup
+                                  // ignore: missing_return
+                                  ? (value) {
+                                      if (value.isEmpty) {
+                                        errorText = true;
+                                        return "Please provide a match password";
+                                      }
+                                      if (value != _passwordController.text) {
+                                        errorText = true;
+                                        return 'Passwords do not match!';
+                                      }
+                                      errorText = false;
+                                    }
+                                  : null,
+                            ),
+                            SizedBox(height: 10),
+                            TextFormField(
+                              enabled: _authMode == AuthMode.Signup,
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
+                              decoration: InputDecoration(
+                                labelText: 'Your Name',
+                                labelStyle: labelStyle,
+                                enabledBorder: enabledBorder,
+                                focusedBorder: focusedBorder,
+                              ),
+                              style: TextStyle(color: Colors.white),
+                              keyboardType: TextInputType.name,
+                              textInputAction: TextInputAction.next,
+                              // ignore: missing_return
+                              validator: (value) {
+                                if (value.isEmpty) {
+                                  errorText = true;
+                                  return "Please provide your name";
+                                }
+                                errorText = false;
+                              },
+                              onSaved: (value) {
+                                _authData['name'] = value;
+                              },
+                            ),
+                            SizedBox(height: 10),
+                            TextFormField(
+                              enabled: _authMode == AuthMode.Signup,
+                              autovalidateMode:
+                                  AutovalidateMode.onUserInteraction,
+                              decoration: InputDecoration(
+                                labelText: 'Your Image as Url',
+                                labelStyle: labelStyle,
+                                enabledBorder: enabledBorder,
+                                focusedBorder: focusedBorder,
+                                prefixIcon: _imageUrlController.text.isEmpty ||
+                                        _imageUrlController.text == ""
+                                    ? Container(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 5, vertical: 10),
+                                        margin: EdgeInsets.symmetric(
+                                            horizontal: 5, vertical: 5),
+                                        child: Icon(
+                                          Icons.image,
+                                          size: 30,
+                                        ),
+                                      )
+                                    : Container(
+                                        padding: EdgeInsets.symmetric(
+                                            horizontal: 5, vertical: 10),
+                                        margin: EdgeInsets.symmetric(
+                                            horizontal: 5, vertical: 5),
+                                        child: Image.network(
+                                          _imageUrlController.text,
+                                          fit: BoxFit.fill,
+                                          width: 30,
+                                          height: 30,
+                                          errorBuilder:
+                                              (context, error, stackTrace) =>
+                                                  Icon(Icons.error),
+                                          // scale: 15,
+                                        ),
+                                      ),
+                              ),
+                              style: TextStyle(color: Colors.white),
+                              keyboardType: TextInputType.url,
+                              textInputAction: TextInputAction.next,
+                              controller: _imageUrlController,
+                              focusNode: _imageUrlFocusController,
+                              // ignore: missing_return
+                              validator: (value) {
+                                if (value.isEmpty) {
+                                  return 'Please provide an Image URL';
+                                }
+                                if (!value.startsWith('http') &&
+                                    !value.startsWith('https')) {
+                                  return 'Please provide a valid Image URL';
+                                }
+                                if (!value.endsWith('.png') &&
+                                    !value.endsWith('.jpg') &&
+                                    !value.endsWith('.jpeg')) {
+                                  return 'Please provide a valid Image URL';
+                                }
+                                return null;
+                              },
+                              onSaved: (value) {
+                                _authData['imageUrl'] = value;
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -337,10 +610,16 @@ class _AuthCardState extends State<AuthCard> {
                   onPressed: _submit,
                   style: ButtonStyle(
                     padding: MaterialStateProperty.all(EdgeInsets.zero),
-                    elevation: MaterialStateProperty.all(8),
+                    elevation: MaterialStateProperty.all(6),
+                    shadowColor:
+                        MaterialStateProperty.all(Colors.grey.shade500),
                     shape: MaterialStateProperty.all(
                       RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(80),
+                        side: BorderSide(
+                          color: Colors.grey.shade400,
+                          width: 3,
+                        ),
                       ),
                     ),
                   ),
