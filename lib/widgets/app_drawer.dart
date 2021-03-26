@@ -20,7 +20,7 @@ class AppDrawaer extends StatelessWidget {
               Divider(),
               ListTile(
                 leading: Icon(Icons.shop),
-                title: Text('Shop'),
+                title: Text('Store'),
                 onTap: () {
                   Navigator.of(context).pushReplacementNamed('/');
                 },
@@ -37,7 +37,7 @@ class AppDrawaer extends StatelessWidget {
               Divider(),
               ListTile(
                 leading: Icon(Icons.edit),
-                title: Text('Manage Products'),
+                title: Text('Edit Products'),
                 onTap: () {
                   Navigator.of(context)
                       .pushReplacementNamed(UserProductsScreen.routeName);
@@ -51,7 +51,7 @@ class AppDrawaer extends StatelessWidget {
               child: Container(
                 padding: EdgeInsets.symmetric(vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.purple[300],
+                  color: Theme.of(context).accentColor.withOpacity(0.8),
                 ),
                 width: double.infinity,
                 child: ListTile(
@@ -59,13 +59,14 @@ class AppDrawaer extends StatelessWidget {
                   title: Text(
                     'Logout',
                     style: TextStyle(
-                      color: Colors.white70,
+                      color: Colors.white,
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   onTap: () {
                     Navigator.of(context).pop();
+                    Navigator.of(context).pushReplacementNamed('/');
                     Provider.of<Auth>(context, listen: false).logout();
                   },
                 ),
