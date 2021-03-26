@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import './themes/theme.dart';
+import './screens/splash_screen.dart';
 import './screens/product_detail_screen.dart';
 import './screens/products_overview_screen.dart';
 import './screens/cart_screen.dart';
@@ -8,6 +10,7 @@ import './screens/orders_screen.dart';
 import './screens/user_products_screen.dart';
 import './screens/edit_product_screen.dart';
 import './screens/auth_screen.dart';
+import './screens/tabs_screen.dart';
 
 import './providers/products.dart';
 import './providers/cart.dart';
@@ -49,55 +52,25 @@ class MyApp extends StatelessWidget {
       child: Consumer<Auth>(
         builder: (context, auth, _) => MaterialApp(
           title: 'Online Shopping',
-          theme: ThemeData(
-            // primarySwatch: Colors.blue,
-            primarySwatch: Colors.red,
-            accentColor: Colors.black,
-            fontFamily: 'Lato',
-
-            // textTheme: TextTheme(
-            //   bodyText1: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            //   bodyText2: TextStyle(fontSize: 18),
-            // ),
-
-            inputDecorationTheme: InputDecorationTheme(
-              fillColor: Colors.white,
-              labelStyle: TextStyle(
-                color: Colors.white60,
-              ),
-
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(25.0),
-                borderSide: BorderSide(
-                  color: Colors.white38,
+          theme: appTheme,
+          home: auth.isAuth
+              ? TabsScreen()
+              : FutureBuilder(
+                  future: auth.tryAutoLogin(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return SplashScreen();
+                    } else {
+                      if (snapshot.error != null) {
+                        return Center(
+                          child: Text('Error'),
+                        );
+                      } else {
+                        return AuthScreen();
+                      }
+                    }
+                  },
                 ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(25.0),
-                borderSide: BorderSide(
-                  color: Colors.white30,
-                  width: 2.0,
-                ),
-              ),
-
-              //fillColor: Colors.green
-            ),
-            snackBarTheme: SnackBarThemeData(
-              backgroundColor: Colors.teal,
-              actionTextColor: Colors.white,
-              disabledActionTextColor: Colors.grey,
-              contentTextStyle: TextStyle(fontSize: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.all(Radius.circular(10)),
-              ),
-              behavior: SnackBarBehavior.floating,
-            ),
-            cardTheme: CardTheme(
-              elevation: 5,
-              shadowColor: Theme.of(context).primaryColor,
-            ),
-          ),
-          home: auth.isAuth ? ProductOverviewScreen() : AuthScreen(),
           debugShowCheckedModeBanner: false,
           routes: {
             ProductDetailScreen.routeName: (ctx) => ProductDetailScreen(),
