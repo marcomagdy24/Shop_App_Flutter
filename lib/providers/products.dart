@@ -15,8 +15,15 @@ class Products with ChangeNotifier {
   final String userId;
 
   Products(this.authToken, this.userId, this._items);
+
   List<Product> get items {
     return [..._items];
+  }
+
+  Future<String> get itemsLenght async {
+    await fetchAndSetProducts(true);
+    print("From Products Provider ${_items.length.toString()}");
+    return _items.length.toString();
   }
 
   List<Product> get favouriteItems {
@@ -59,6 +66,7 @@ class Products with ChangeNotifier {
       _items = loadedProducts;
       notifyListeners();
     } catch (error) {
+      // print("Error + $error");
       throw (error);
     }
   }
@@ -88,7 +96,7 @@ class Products with ChangeNotifier {
       // _items.insert(0, newProduct); // at the start of the list
       notifyListeners();
     } catch (error) {
-      print(error);
+      // print(error);
       throw (error);
     }
   }
