@@ -35,7 +35,7 @@ class Cart with ChangeNotifier {
 
   int get itemCountProducts {
     int quantity = 0;
-    print(quantity);
+    // print(quantity);
     _items.values.forEach((element) {
       quantity += element.quantity;
     });
