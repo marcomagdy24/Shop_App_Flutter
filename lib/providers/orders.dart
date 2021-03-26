@@ -30,6 +30,12 @@ class Orders with ChangeNotifier {
     return [..._orders];
   }
 
+  Future<String> get ordersLenght async {
+    await fetchAndSetOrders();
+    print("From Orders Provider ${_orders.length.toString()}");
+    return _orders.length.toString();
+  }
+
   Future<void> fetchAndSetOrders() async {
     final url =
         'https://shop-app-f6161-default-rtdb.firebaseio.com/orders/$userId.json?auth=$authToken';
