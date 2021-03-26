@@ -3,6 +3,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/http_exception.dart';
 
@@ -11,6 +12,14 @@ class Auth with ChangeNotifier {
   DateTime _expiryDate;
   String _userId;
   Timer _authTimer;
+  Map<String, dynamic> _userData = {
+    'name': '',
+    'imageUrl': '',
+  };
+
+  Map<String, dynamic> get user {
+    return _userData;
+  }
 
   bool get isAuth {
     return token != null;
@@ -57,20 +66,91 @@ class Auth with ChangeNotifier {
       );
       _autoLogout();
       notifyListeners();
+      final prefs = await SharedPreferences.getInstance();
+      final userData = json.encode(
+        {
+          'token': _token,
+          'userId': _userId,
+          'expiryDate': _expiryDate.toIso8601String()
+        },
+      );
+      prefs.setString('userData', userData);
     } catch (e) {
       throw (e);
     }
   }
 
-  Future<void> signup(String email, String password) async {
-    return await _authenticate("signUp", email, password);
+  Future<void> fetchUserData() async {
+    if (isAuth) {
+      final url =
+          'https://shop-app-f6161-default-rtdb.firebaseio.com/users/$userId.json?auth=$token';
+      try {
+        final response = await http.get(Uri.parse(url));
+        final userData = json.decode(response.body);
+        if (userData == null) return;
+        _userData['name'] = userData['name'];
+        _userData['imageUrl'] = userData['imageUrl'];
+        print(userData);
+        notifyListeners();
+      } catch (e) {
+        throw (e);
+      }
+    }
+  }
+
+  Future<void> signup(
+      String email, String password, String name, String imageUrl) async {
+    await _authenticate("signUp", email, password);
+    if (isAuth) {
+      final url =
+          'https://shop-app-f6161-default-rtdb.firebaseio.com/users/$userId.json?auth=$token';
+      try {
+        final response = await http.put(
+          Uri.parse(url),
+          body: json.encode(
+            {
+              'name': name,
+              'imageUrl': imageUrl,
+            },
+          ),
+        );
+        if (response.statusCode >= 400) {
+          throw HttpException('Something went wrong!');
+        }
+        _userData['name'] = name;
+        _userData['imageUrl'] = imageUrl;
+        notifyListeners();
+
+        return response;
+      } catch (e) {
+        throw (e);
+      }
+    }
   }
 
   Future<void> login(String email, String password) async {
-    return _authenticate("signInWithPassword", email, password);
+    await _authenticate("signInWithPassword", email, password);
+    await fetchUserData();
+    notifyListeners();
   }
 
-  void logout() {
+  Future<bool> tryAutoLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!prefs.containsKey('userData')) return false;
+    final extractedUserData =
+        json.decode(prefs.getString('userData')) as Map<String, dynamic>;
+    final expiryDate = DateTime.parse(extractedUserData['expiryDate']);
+    if (DateTime.now().isAfter(expiryDate)) return false;
+    _token = extractedUserData['token'];
+    _userId = extractedUserData['userId'];
+    _expiryDate = expiryDate;
+    notifyListeners();
+    _autoLogout();
+
+    return true;
+  }
+
+  Future<void> logout() async {
     _token = null;
     _userId = null;
     _expiryDate = null;
@@ -79,6 +159,7 @@ class Auth with ChangeNotifier {
       _authTimer = null;
     }
     notifyListeners();
+    await SharedPreferences.getInstance().then((value) => value.clear());
   }
 
   void _autoLogout() {
